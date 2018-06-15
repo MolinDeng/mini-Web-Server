@@ -19,13 +19,13 @@ HTTP_server::HTTP_server() {
 	ret = WSAStartup(wVersionRequested, &wsaData);
 	if (ret != 0)
 	{
-		printf("WSAStartup() failed!\n");
+		std::cout << "WSAStartup() failed!" << std::endl;
 	}
 	// confirm WinSock DLL sorport ver. 2.2：  
 	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
 	{
 		WSACleanup();
-		printf("Invalid Winsock version!\n");
+		std::cout << "Invalid Winsock version!" << std::endl;
 	}
     socket_init();
 }
@@ -39,21 +39,21 @@ void HTTP_server::socket_init() {
 
     // create socket
     listen_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (listen_socket == INVALID_SOCKET) printf("cannot create socket\n");
-	else printf("successfully create socket\n");
+	if (listen_socket == INVALID_SOCKET) std::cout <<"cannot create socket" << std::endl;
+	else std::cout <<"successfully create socket" << std::endl;
 	setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR,
 		(char*)&SO_REUSEADDR_ON, sizeof(SO_REUSEADDR_ON));//在套接字级别上打开地址复用
 
 	// binding
 	int ret = bind(listen_socket, (sockaddr*)&sa_server,
 		sizeof(sa_server));
-	if (ret == SOCKET_ERROR) printf("bind error\n");
-	else printf("successfully bind\n");
+	if (ret == SOCKET_ERROR) std::cout <<"bind error" << std::endl;
+	else std::cout <<"successfully bind" << std::endl;
 
 	// listening
 	ret = listen(listen_socket, QUEUE_SIZE);
-	if (ret == SOCKET_ERROR) printf("listen failed\n");
-	else printf("successfully listen\n");
+	if (ret == SOCKET_ERROR) std::cout <<"listen failed" << std::endl;
+	else std::cout <<"successfully listen" << std::endl;
 }
 
 void send_msg(std::string path, packet msg) {
@@ -61,7 +61,7 @@ void send_msg(std::string path, packet msg) {
     int sp;
 	if (!in) {
 		strcpy(msg.data, "HTTP/1.1 404 Not Found\n");
-		printf("file no open\n");
+		std::cout << "file open error" << std::endl;
 	}
     else {
 		in.seekg(0, std::ios_base::end);
@@ -75,11 +75,11 @@ void send_msg(std::string path, packet msg) {
 		int total_size = 0;
 		int ret = send(msg.client_socket, msg.data, strlen(msg.data), 0);
 		if (ret == SOCKET_ERROR) {
-			printf("send failed\n");
+			std::cout << "send failed" << std::endl;
 			*msg.is_active = false;
 			return;
 		}
-		else printf("send success\n");
+		else std::cout << "\nsend successfully" << std::endl;
 		
 		char buffer[100];
 		int s = sp + strlen(msg.data) + 1;
@@ -98,7 +98,7 @@ void send_msg(std::string path, packet msg) {
 			int ret = send(msg.client_socket, buffer, size, 0);
 
 			if (ret == SOCKET_ERROR) {
-				printf("send failed\n");
+				std::cout << "send failed" << std::endl;
 				*msg.is_active = false;
 				return;
 			}
@@ -110,8 +110,8 @@ void handle_msg(packet msg) {
     int i = 0, cnt = 0;
     bool flag = false, is_post = false;
     std::string str = "", type = "", data = "";
-    std::cout << "This is a thread#" << msg.id << "  ";
-    std::cout << "The data of msg: " << std::endl << msg.data;
+    // std::cout << "This is a thread#" << msg.id << "  ";
+    // std::cout << "The data of msg: " << std::endl << msg.data;
 
     if (strcmp(msg.data, "") == 0 || strcmp(msg.data, "\n") == 0) {
         *msg.is_active = false;
@@ -142,7 +142,6 @@ void handle_msg(packet msg) {
 	}
 	// response to quest
 	if (type=="POST") {
-	
 		bool login_flag = false;
 		bool pass_flag = false;
 		std::string name = "";
@@ -150,7 +149,6 @@ void handle_msg(packet msg) {
 		str = "";
 		for (int j = i+3; j <= strlen(msg.data); j++) {
 			if (msg.data[j] == '&' || msg.data[j] == '=' || j ==strlen(msg.data)) {
-				std::cout << str << std::endl;
 				if (login_flag) {
 					if (str == ACCOUNT) {
 						name = str;
@@ -162,9 +160,7 @@ void handle_msg(packet msg) {
 					login_flag = false;
 				}
 				else if (pass_flag) {
-					
 					if (str == passwd && str != "") {
-						std::cout << "str="<<str << " " <<"pw="<< passwd << std::endl;
 						char response[200];
 						strcpy(response, "<html><body>Nice to meet u,");
 						strcat(response, name.c_str());
@@ -177,20 +173,19 @@ void handle_msg(packet msg) {
 						strcat(msg.data, length);
 						strcat(msg.data, "\n\n");
 						strcat(msg.data, response);
-						printf("%s\n", msg.data);
+						//std::cout << "\n\nsending msg: "<< msg.data << std::endl;
 						int r = send(msg.client_socket, msg.data, 10000, 0);
 
 						if (r == SOCKET_ERROR) {
-							printf("send failed\n");
+							std::cout << "send failed" << std::endl;
 							*msg.is_active = false;
 							return;
 						}
-						printf("send success\n");
+						std::cout << "\nsend successfully" << std::endl;
 						*msg.is_active = false;
 						return;
 					}
 					else {
-						std::cout << "str=" << str << " " << "pw=" << passwd << std::endl;
 						char response[200];
 						strcpy(response, "<html><body>Login failed</body></html>\n");
 						int len = strlen(response);
@@ -201,15 +196,15 @@ void handle_msg(packet msg) {
 						strcat(msg.data, length);
 						strcat(msg.data, "\n\n");
 						strcat(msg.data, response);
-						printf("%s\n", msg.data);
+						//std::cout << "\n\nsending msg: "<< msg.data << std::endl;
 						int r = send(msg.client_socket, msg.data, 10000, 0);
 
 						if (r == SOCKET_ERROR) {
-							printf("send failed\n");
+							std::cout << "send failed" << std::endl;
 							*msg.is_active = false;
 							return;
 						}
-						printf("send success\n");
+						std::cout << "\nsend successfully" << std::endl;
 						*msg.is_active = false;
 						return;
 					}
@@ -232,7 +227,6 @@ void handle_msg(packet msg) {
 		return;
 	}
 	else if (type=="GET" && data != "") {
-
 		memset(msg.data, 0, sizeof(msg.data));
 		if (data.substr(0, 5) == "/net/") {
 			std::string str = "";
@@ -251,15 +245,11 @@ void handle_msg(packet msg) {
 				*msg.is_active = false;
 				return;
 			}
-			std::cout <<"str="<< str << ","<<std::endl;
 			if (str == "txt") 
 				path = "catalog/txt/" + data.substr(5);
 			else if (str == "html") {
-				std::cout << "yes" << std::endl;
 				path = "catalog/html/" + data.substr(5);
-				std::cout << "path=" << path << std::endl;
 			}
-			std::cout << "str=" << str << std::endl;
 			send_msg(path, msg);
 		}
 		else if (data.substr(0, 5) == "/img/") {
@@ -292,7 +282,7 @@ void wait_for_exit(bool* is_active, SOCKET listen_socket) {
 					exit(0);
 				}
 			}
-		} else printf("Exit instruction error!\n");
+		} else std::cout << "Exit instruction error!" << std::endl;
 	}
 }
 
@@ -303,23 +293,23 @@ void HTTP_server::run() {
     int len = sizeof(sa_server);
     // waiting for conn.
     while (true) {
-        printf("waiting for connection...\n");
+        std::cout <<"waiting for connection..." << std::endl;
         // accept
         client_socket = accept(listen_socket, (sockaddr*)&sa_server, &len);
 
-		if (client_socket < 0) printf("accept failed...\n");
+		if (client_socket < 0) std::cout <<"accept failed..." << std::endl;
 		else {
-			printf("successfully connect\n");
+			std::cout <<"successfully connect" << std::endl;
 			memset(buffer, 0, sizeof(buffer));
 
 			int ret = recv(client_socket, buffer, BUFFER_SIZE, 0);
 
 			if (ret == SOCKET_ERROR) 
-				printf("receive failed...\n");
+				std::cout <<"receive failed..." << std::endl;
 			else if (ret == 0) 
-				printf("the client socket is closed...\n");
+				std::cout <<"the client socket is closed..." << std::endl;
 			else {
-				printf("successfully receive\n");
+				std::cout <<"successfully receive\n" << std::endl;
 				for (int i = 0; i < MAX; i++) {
 					if (!is_active[i]) {
 						is_active[i] = true;
@@ -330,5 +320,6 @@ void HTTP_server::run() {
 				}
 			}
 		}
+		Sleep(100);
     }
 }

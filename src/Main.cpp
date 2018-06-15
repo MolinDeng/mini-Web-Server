@@ -10,3 +10,11 @@ int main() {
     system("pause");
     return 0;
 }
+
+/*
+http://127.0.0.1:3457/net/test.html
+
+http://127.0.0.1:3457/net/noimg.html
+
+http://127.0.0.1:3457/net/test.txt
+*/

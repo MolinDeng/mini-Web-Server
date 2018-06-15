@@ -8,6 +8,7 @@
 #include<string>
 #include<iostream>
 #include <winsock.h>
+#include <windows.h>
 #include <thread>
 
 #define SERVER_PORT 3457
